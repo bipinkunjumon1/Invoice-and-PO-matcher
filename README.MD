@@ -5,8 +5,7 @@ An intelligent document processing application built with **Streamlit** and **Go
 
 <br>
 
-![Demo GIF of the Invoice & PO Matching Tool](https://i.imgur.com/your-demo-image.gif)
-*Replace the link above with a GIF or screenshot of your application.*
+
 
 ---
 

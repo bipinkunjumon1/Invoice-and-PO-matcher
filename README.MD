@@ -104,6 +104,7 @@ Your web browser should automatically open to the application's interface.
     * The overall status (`APPROVED ✅` or `NEEDS REVIEW ⚠️`) will be displayed at the top.
     * A side-by-side table will show the extracted data from both documents.
     * Mismatched fields will be highlighted for immediate attention.
+6. if output shows worng information, please try match again with the same documents once more.
 
 ---
 

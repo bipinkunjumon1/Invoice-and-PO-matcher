@@ -1,9 +1,5 @@
 # Intelligent Invoice & PO Matching Tool
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.30.0-FF4B4B.svg)](https://streamlit.io)
-[![Google Gemini](https://img.shields.io/badge/Google-Gemini_API-4285F4.svg)](https://ai.google.dev/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 An intelligent document processing application built with **Streamlit** and **Google's Gemini API** to automate the two-way and three-way matching process for Accounts Payable (AP). This tool streamlines workflows by extracting key data from PDF Invoices and Purchase Orders, performing intelligent comparisons, and providing a clear, actionable summary for AP teams.
 

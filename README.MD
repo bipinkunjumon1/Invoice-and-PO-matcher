@@ -1,118 +1,115 @@
-📑 Invoice & PO Matching Tool
-Automate Accounts Payable Matching with AI + OCR
+# Intelligent Invoice & PO Matching Tool
 
-An intelligent document processing application built using Streamlit and Google's Gemini API, designed to automate the two-way and three-way matching process for Accounts Payable (AP) departments.
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.30.0-FF4B4B.svg)](https://streamlit.io)
+[![Google Gemini](https://img.shields.io/badge/Google-Gemini_API-4285F4.svg)](https://ai.google.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-The tool extracts key data from uploaded Invoices and Purchase Orders (POs) — even from scanned PDFs — and compares them side-by-side. It intelligently aggregates line items, detects mismatches, and provides a color-coded summary indicating whether the documents are Approved ✅ or Need Review ⚠️.
+An intelligent document processing application built with **Streamlit** and **Google's Gemini API** to automate the two-way and three-way matching process for Accounts Payable (AP). This tool streamlines workflows by extracting key data from PDF Invoices and Purchase Orders, performing intelligent comparisons, and providing a clear, actionable summary for AP teams.
 
-✨ Key Features
-🧠 1. Intelligent Data Extraction (Gemini-Pro)
+<br>
 
-Leverages Google’s Gemini-Pro model to read and interpret both text-based and scanned PDFs.
+![Demo GIF of the Invoice & PO Matching Tool](https://i.imgur.com/your-demo-image.gif)
+*Replace the link above with a GIF or screenshot of your application.*
 
-Extracts key invoice and PO fields such as:
+---
 
-Invoice Number
+## ✨ Core Features
 
-PO Number
+* **🤖 AI-Powered Data Extraction:** Leverages the multi-modal capabilities of **Google's Gemini Pro Vision** to intelligently extract key fields (Invoice #, PO #, Dates, Vendor, Line Items, Totals) from both digital and scanned PDFs.
+* **⚖️ Automated 2-Way & 3-Way Matching:** Implements robust logic to compare critical data points between invoices and purchase orders:
+    * **PO Number & Vendor Name:** Ensures the invoice corresponds to the correct PO and supplier (with fuzzy matching for vendor names).
+    * **Total Amounts:** Verifies that the invoice total matches the PO total.
+    * **Line Item Details:** Aggregates and compares item descriptions, quantities, and prices to flag over-billing or quantity discrepancies.
+* **📊 Intuitive UI & Verification:** A clean, user-friendly interface built with Streamlit provides a side-by-side comparison of extracted data, with color-coded highlights for easy identification of mismatches.
+* **✅ Clear Status Approvals:** Each invoice is automatically assigned a clear status—**`APPROVED ✅`** or **`NEEDS REVIEW ⚠️`**—based on the matching results, allowing users to focus only on exceptions.
+* **📄 Multi-Document Handling:** The model is prompted to correctly parse and aggregate data even when multiple invoices are present in a single text extraction.
 
-Date
+---
 
-Vendor Name
+## 🛠️ Technology Stack
 
-Line Items (Description, Quantity, Price)
+* **Backend:** Python
+* **AI Model:** Google Gemini Pro & Gemini Pro Vision
+* **UI Framework:** Streamlit
+* **PDF Processing:** PyMuPDF, Pytesseract (for OCR)
+* **Data Handling:** Pandas
+* **Environment:** python-dotenv, FuzzyWuzzy
 
-Total Amount
+---
 
-🧾 2. Multi-Invoice Handling
+## 🚀 Getting Started
 
-Capable of parsing multiple invoices contained in a single PDF file.
+Follow these instructions to set up and run the project locally.
 
-Automatically aggregates totals and quantities across all invoices.
+### 1. Prerequisites
 
-🧮 3. Item Aggregation & Normalization
+* **Python 3.8** or higher.
+* **Google AI API Key:** You must have a valid [Gemini API key](https://ai.google.dev/).
+* **Tesseract OCR:** Required for reading image-based (scanned) PDFs.
+    * **Windows:** Install from the [official Tesseract page](https://github.com/tesseract-ocr/tesseract) and ensure its installation directory is added to your system's PATH.
+    * **Linux/macOS:** Install via a package manager.
+        ```bash
+        # Debian/Ubuntu
+        sudo apt update && sudo apt install tesseract-ocr
 
-Combines line items with matching descriptions (even if worded slightly differently).
+        # macOS (using Homebrew)
+        brew install tesseract
+        ```
 
-Sums up quantities and calculates total prices automatically.
+### 2. Installation & Setup
 
-🔗 4. Two-Way & Three-Way Matching Logic
+**A. Clone the Repository**
+```bash
+git clone [https://github.com/your-username/your-repo-name.git](https://github.com/your-username/your-repo-name.git)
+cd your-repo-name
+```
 
-Compares critical fields across documents:
-
-Field	Logic
-PO Number	Must exactly match between Invoice and PO
-Vendor Name	Fuzzy matching used to tolerate minor text differences
-Total Amount	Strict numerical comparison
-Line Items & Quantities	Detects overbilling, partial shipments, and mismatched pricing
-💻 5. Clean, Intuitive Streamlit UI
-
-Simple drag-and-drop upload for Invoice and PO PDFs.
-
-Modern TailwindCSS-inspired design.
-
-Two-column layout showing Invoice Details and PO Details side-by-side.
-
-🟩 6. Status Indicators
-
-✅ APPROVED — All details match perfectly.
-
-⚠️ NEEDS REVIEW — Discrepancies detected (quantity, total, or missing item).
-
-Detailed text-based report summarizing matches and mismatches.
-
-🛠️ Prerequisites
-
-Before running the app, make sure you have the following installed:
-
-Requirement	Description
-Python 3.8+	Required to run the Streamlit app
-Google AI API Key	Get your Gemini API key
- and store it in .env
-Tesseract OCR	Needed for extracting text from scanned image PDFs
-pip & virtualenv	For managing dependencies
-🧩 Installing Tesseract OCR
-
-Windows:
-
-Download the official installer from Tesseract GitHub
-.
-
-Update the path in your script if needed:
-
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-
-
-Linux:
-
-sudo apt install tesseract-ocr
-
-
-macOS:
-
-brew install tesseract
-
-🚀 Setup & Installation
-
-Follow these steps to get started:
-
-1️⃣ Clone the Repository
-git clone https://github.com/<your-username>/invoice-po-matcher.git
-cd invoice-po-matcher
-
-2️⃣ Create a Virtual Environment
+**B. Create a Virtual Environment**
+It's highly recommended to use a virtual environment to manage project dependencies.
+```bash
+# Create the virtual environment
 python -m venv venv
-source venv/bin/activate     # macOS/Linux
-venv\Scripts\activate        # Windows
 
-3️⃣ Add Your Gemini API Key
+# Activate it
+# On macOS/Linux:
+source venv/bin/activate
 
-Create a .env file in the root directory and paste your API key:
+# On Windows:
+venv\Scripts\activate
+```
 
-GOOGLE_API_KEY="YOUR_GEMINI_API_KEY_HERE"
-
-4️⃣ Install Dependencies
+**C. Install Dependencies**
+```bash
 pip install -r requirements.txt
+```
 
-5️⃣ Run the Application
+**D. Configure Environment Variables**
+Create a file named `.env` in the root of the project directory and add your Google Gemini API key.
+```env
+GOOGLE_API_KEY="YOUR_GEMINI_API_KEY_HERE"
+```
+
+### 3. Running the Application
+
+Once the setup is complete, launch the Streamlit application with the following command:
+```bash
 streamlit run app.py
+```
+Your web browser should automatically open to the application's interface.
+
+---
+
+## 📋 Usage
+
+1.  **Launch the app** using the command above.
+2.  **Upload the Purchase Order (PO)** PDF using the file uploader on the left.
+3.  **Upload the corresponding Invoice** PDF using the second file uploader.
+4.  The application will process both documents, extract the relevant data, and perform the matching logic.
+5.  **Review the results:**
+    * The overall status (`APPROVED ✅` or `NEEDS REVIEW ⚠️`) will be displayed at the top.
+    * A side-by-side table will show the extracted data from both documents.
+    * Mismatched fields will be highlighted in red for immediate attention.
+
+---
+

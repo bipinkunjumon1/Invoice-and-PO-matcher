@@ -1,0 +1,10 @@
+#requirements.txt
+streamlit
+google-generativeai
+python-dotenv
+PyMuPDF
+pdfplumber
+Pillow
+pytesseract
+fuzzywuzzy
+python-Levenshtein

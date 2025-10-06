@@ -33,7 +33,6 @@ An intelligent document processing application built with **Streamlit** and **Go
 * **AI Model:** Google Gemini Pro & Gemini Pro Vision
 * **UI Framework:** Streamlit
 * **PDF Processing:** PyMuPDF, Pytesseract (for OCR)
-* **Data Handling:** Pandas
 * **Environment:** python-dotenv, FuzzyWuzzy
 
 ---
@@ -109,7 +108,7 @@ Your web browser should automatically open to the application's interface.
 5.  **Review the results:**
     * The overall status (`APPROVED ✅` or `NEEDS REVIEW ⚠️`) will be displayed at the top.
     * A side-by-side table will show the extracted data from both documents.
-    * Mismatched fields will be highlighted in red for immediate attention.
+    * Mismatched fields will be highlighted for immediate attention.
 
 ---
 

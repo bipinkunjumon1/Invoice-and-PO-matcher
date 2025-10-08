@@ -11,14 +11,16 @@ An intelligent document processing application built with **Streamlit** and **Go
 
 ## ✨ Core Features
 
-* **🤖 AI-Powered Data Extraction:** Leverages the multi-modal capabilities of **Google's Gemini Pro Vision** to intelligently extract key fields (Invoice #, PO #, Dates, Vendor, Line Items, Totals) from both digital and scanned PDFs.
-* **⚖️ Automated 2-Way & 3-Way Matching:** Implements robust logic to compare critical data points between invoices and purchase orders:
-    * **PO Number & Vendor Name:** Ensures the invoice corresponds to the correct PO and supplier (with fuzzy matching for vendor names).
+* **🤖 AI-Powered Data Extraction:** Leverages **Google's Gemini Pro Vision** to intelligently extract key fields (Invoice #, PO #, Dates, Vendor, Line Items, Totals) from both digital and scanned PDFs.
+* **⚖️ Automated 2-Way Matching:** Implements robust logic to compare critical data points between invoices and purchase orders:
+    * **PO Number & Vendor Name:** Ensures the invoice corresponds to the correct PO and supplier.
     * **Total Amounts:** Verifies that the invoice total matches the PO total.
-    * **Line Item Details:** Aggregates and compares item descriptions, quantities, and prices to flag over-billing or quantity discrepancies.
+    * **Line Item Details:** Compares item descriptions, quantities, and prices to flag over-billing or quantity discrepancies.
+* **✍️ Agent-Style Summary:** Automatically generates a clear, narrative summary that explains any identified discrepancies in plain language. This allows users to quickly understand the root cause of a mismatch without manually comparing individual fields.
 * **📊 Intuitive UI & Verification:** A clean, user-friendly interface built with Streamlit provides a side-by-side comparison of extracted data, with color-coded highlights for easy identification of mismatches.
-* **✅ Clear Status Approvals:** Each invoice is automatically assigned a clear status—**`APPROVED ✅`** or **`NEEDS REVIEW ⚠️`**—based on the matching results, allowing users to focus only on exceptions.
-* **📄 Multi-Document Handling:** The model is prompted to correctly parse and aggregate data even when multiple invoices are present in a single text extraction.
+* **✅ Clear Status Approvals:** Each comparison results in a clear status—**`APPROVED ✅`** or **`NEEDS REVIEW ⚠️`**—allowing users to focus only on exceptions.
+* **📄 Multi-Document Handling:** The model is prompted to correctly parse and aggregate data even when multiple invoices are present in a single document.
+
 
 ---
 

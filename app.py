@@ -25,6 +25,7 @@ except KeyError:
     st.stop()
 
 # --- Prompts ---
+# MODIFIED PROMPT TO RE-INCLUDE PAYMENT TERMS - Note: This is kept for the model's context, but the user's request removes the check.
 TEXT_PROMPT = """
 You are an expert accounts payable specialist. Your task is to analyze the following text content from an invoice and a purchase order and extract key information.
 
@@ -34,7 +35,7 @@ From the INVOICE text, extract:
 - Invoice Number: List all unique invoice numbers found, separated by a comma.
 - Purchase Order (PO) Number: Use the PO number that is common across all invoices.
 - Date: Use the date from the latest invoice found.
-- Vendor Name: Extract the vendor name. This is the name of the company issuing the invoice, typically found in the header, sender's address, or contact information section. It is not the customer's name (which is usually NADEC or The National Agricultural Development Company). Look for phrases like the company name followed by address, phone, or email. Common examples might include "International N&H Denmark ApS" or similar; ignore logos or brand names like "DANISCO" if a full legal entity name is present.
+- Vendor Name: Extract the vendor name.
 - A list of all line items: Find all line items across ALL invoices in the text. If an item with the same description appears on multiple invoices or multiple times, you MUST sum their quantities and calculate the total price accordingly.
 - Total Amount: Sum the total amounts from ALL invoices found in the text.
 
@@ -130,7 +131,7 @@ def normalize_and_aggregate_items(items):
             quantity, unit_price = 0, 0.0
         normalized[desc_key]["quantity"] += quantity
         if unit_price > 0:
-             normalized[desc_key]["price"] = unit_price
+                normalized[desc_key]["price"] = unit_price
     return list(normalized.values())
 
 # --- Streamlit UI ---
@@ -144,6 +145,7 @@ st.markdown("""
     .table-header { background-color: #f9fafb; font-weight: 600; }
     .status-approved { color: #15803d; font-weight: bold; }
     .status-review { color: #b91c1c; font-weight: bold; }
+    .agent-summary { border-left: 4px solid #4f46e5; padding-left: 16px; margin-top: 16px; font-family: sans-serif; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -229,28 +231,31 @@ if 'analysis' in st.session_state and st.session_state['analysis']:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown('<h2 class="text-xl font-semibold">🔎 Match/Mismatch Summary</h2>', unsafe_allow_html=True)
 
+    # This helper function is now used by both summary functions
+    def get_normalized_dict(items):
+        normalized = defaultdict(lambda: {"quantity": 0, "description": "", "price": 0.0})
+        if not isinstance(items, list): return normalized
+        for item in items:
+            if not isinstance(item, dict) or not item.get("description"): continue
+            desc_key = item.get("description", "").strip().lower()
+            if desc_key.startswith("culture "):
+                desc_key = desc_key[len("culture "):]
+            
+            if not normalized[desc_key]["description"]:
+                 normalized[desc_key]["description"] = item.get("description")
+            try:
+                quantity = float(item.get("quantity", 0))
+                price = float(str(item.get("price", 0.0)).replace(',','.'))
+            except (ValueError, TypeError):
+                quantity, price = 0, 0.0
+            
+            normalized[desc_key]["quantity"] += quantity
+            if price > 0:
+                 normalized[desc_key]["price"] = price # Use latest price
+        return normalized
+
     def generate_match_summary(invoice_data, po_data):
         lines, issues = [], []
-
-        def get_normalized_dict(items):
-            normalized = defaultdict(lambda: {"quantity": 0, "total_price": 0.0, "description": ""})
-            if not isinstance(items, list): return normalized
-            for item in items:
-                if not isinstance(item, dict) or not item.get("description"): continue
-                desc_key = item.get("description", "").strip().lower()
-                if desc_key.startswith("culture "):
-                    desc_key = desc_key[len("culture "):]
-                
-                normalized[desc_key]["description"] = item.get("description")
-                try:
-                    quantity = float(item.get("quantity", 0))
-                    unit_price = float(str(item.get("price", 0.0)).replace(',','.'))
-                except (ValueError, TypeError):
-                    quantity, unit_price = 0, 0.0
-                
-                normalized[desc_key]["quantity"] += quantity
-                normalized[desc_key]["total_price"] += unit_price * quantity
-            return normalized
 
         inv_po_no_raw = invoice_data.get("po_no")
         po_po_no_raw = po_data.get("po_no")
@@ -272,48 +277,110 @@ if 'analysis' in st.session_state and st.session_state['analysis']:
             lines.append(f"• Vendor mismatch: Invoice ({inv_vendor_raw or 'N/A'}) vs PO ({po_vendor_raw or 'N/A'}) ✗")
             issues.append("Vendor mismatch")
 
-        # --- MODIFIED: Stricter Total Amount Check ---
         invoice_total = float(str(invoice_data.get("total", 0.0)).replace(',','.'))
         po_total = float(str(po_data.get("total", 0.0)).replace(',','.'))
         if abs(invoice_total - po_total) < 0.01:
-            lines.append(f"• Total amount matches: **${invoice_total:,.2f}** ✓")
+            lines.append(f"• Total amount matches: **SAR {invoice_total:,.2f}** ✓")
         else:
-            # Any difference is now treated as a critical mismatch
-            lines.append(f"• **Total amount mismatch**: Invoice (${invoice_total:,.2f}) vs PO (${po_total:,.2f}) ✗")
+            lines.append(f"• **Total amount mismatch**: Invoice (SAR {invoice_total:,.2f}) vs PO (SAR {po_total:,.2f}) ✗")
             issues.append("Total amount mismatch")
 
         normalized_invoice_items = get_normalized_dict(invoice_data.get("items", []))
         normalized_po_items = get_normalized_dict(po_data.get("items", []))
-
+        
         lines.append("---")
 
-        for inv_key, inv_item in normalized_invoice_items.items():
-            if inv_key in normalized_po_items:
+        all_inv_keys = set(normalized_invoice_items.keys())
+        all_po_keys = set(normalized_po_items.keys())
+
+        for inv_key in all_inv_keys:
+            inv_item = normalized_invoice_items[inv_key]
+            display_desc = inv_item.get('description', 'N/A')
+            if inv_key in all_po_keys:
                 po_item = normalized_po_items[inv_key]
-                display_desc = inv_item.get('description')
-                
                 if inv_item['quantity'] > po_item['quantity'] + 0.001:
                     lines.append(f"• **Quantity mismatch** for '{display_desc}': Invoice ({inv_item['quantity']}) **exceeds** PO quantity ({po_item['quantity']}) ✗")
                     issues.append("Item quantity exceeds PO")
                 elif inv_item['quantity'] < po_item['quantity'] - 0.001:
                     lines.append(f"• Quantity for '{display_desc}' is a **partial shipment**: Invoice ({inv_item['quantity']}) of PO ({po_item['quantity']}) ⚠️")
                 else:
-                    lines.append(f"• Quantity for '{display_desc}' matches fully. ✓")
-
-                if inv_item['total_price'] > po_item['total_price'] + 0.01:
-                    lines.append(f"• **Line total mismatch** for '{display_desc}': Invoice (${inv_item['total_price']:,.2f}) **exceeds** PO total (${po_item['total_price']:,.2f}) ✗")
-                    issues.append("Line total exceeds PO")
+                    lines.append(f"• Quantity for '{display_desc}' matches. ✓")
             else:
-                lines.append(f"• Item '{inv_item.get('description')}' on invoice could not be found on the PO. ✗")
+                lines.append(f"• Item '{display_desc}' on invoice could not be found on the PO. ✗")
                 issues.append("Unmatched invoice item")
-        
+
         if not issues:
             lines.append('<span class="status-approved">→ Status: APPROVED ✅</span>')
         else:
             lines.append('<span class="status-review">→ Status: NEEDS REVIEW ⚠️ - Critical discrepancies found.</span>')
         
         return "<br>".join(lines)
+    
+    # --- START: AGENT SUMMARY FUNCTION (UPDATED) ---
+    def generate_agent_summary(invoice_data, po_data):
+        discrepancy_details = []
+
+        # Check 1: Total Amount Mismatch
+        invoice_total = float(str(invoice_data.get("total", 0.0)).replace(',','.'))
+        po_total = float(str(po_data.get("total", 0.0)).replace(',','.'))
+        if abs(invoice_total - po_total) >= 0.01:
+            comparison = "higher" if invoice_total > po_total else "lower"
+            discrepancy_details.append(f"The **Total Amount** on the invoice (**SAR {invoice_total:,.2f}**) is {comparison} than the Purchase Order total (**SAR {po_total:,.2f}**).")
+
+        # Check 2: Line Item Mismatches
+        normalized_invoice_items = get_normalized_dict(invoice_data.get("items", []))
+        normalized_po_items = get_normalized_dict(po_data.get("items", []))
+        all_inv_keys = set(normalized_invoice_items.keys())
+        all_po_keys = set(normalized_po_items.keys())
+
+        for inv_key in all_inv_keys:
+            inv_item = normalized_invoice_items[inv_key]
+            display_desc = inv_item.get('description', 'N/A')
+
+            if inv_key not in all_po_keys:
+                discrepancy_details.append(f"The item **'{display_desc}'** appears on the invoice but was not found on the purchase order.")
+                continue
+
+            po_item = normalized_po_items[inv_key]
+            if inv_item['quantity'] > po_item['quantity'] + 0.001:
+                discrepancy_details.append(f"For the item **'{display_desc}'**, the invoice bills for **{inv_item['quantity']}** units, which exceeds the **{po_item['quantity']}** units listed on the purchase order.")
+            elif inv_item['quantity'] < po_item['quantity'] - 0.001:
+                discrepancy_details.append(f"The invoice reflects a **partial shipment** for the item **'{display_desc}'**, with **{inv_item['quantity']}** units billed out of the **{po_item['quantity']}** total units ordered.")
+        
+        # Construct final summary
+        invoice_no = invoice_data.get("invoice_no", "N/A")
+        po_no = po_data.get("po_no", "N/A")
+        intro = f"Based on the review of Invoice **{invoice_no}** against Purchase Order **{po_no}**, the following discrepancies have been identified:"
+        
+        if not discrepancy_details:
+            # If no issues were found, provide an approval summary
+            summary_html = f"""
+            <div class="agent-summary">
+                <h4>Agent-Style Summary</h4>
+                <p>A review of Invoice **{invoice_no}** against Purchase Order **{po_no}** shows that all key details match.</p>
+                <h5 class="mt-3 font-semibold">Conclusion</h5>
+                <p class="status-approved">✅ The invoice is approved for payment.</p>
+            </div>
+            """
+        else:
+            # If there are issues, list them
+            body = "".join([f"<li>{detail}</li>" for detail in discrepancy_details])
+            summary_html = f"""
+            <div class="agent-summary">
+                <h4>Agent-Style Summary</h4>
+                <p>{intro}</p>
+                <h5 class="mt-3 font-semibold">Discrepancy Details</h5>
+                <ul>{body}</ul>
+            </div>
+            """
+        return summary_html
+    # --- END: AGENT SUMMARY FUNCTION ---
 
     match_summary = generate_match_summary(invoice_data, po_data)
     st.markdown(match_summary, unsafe_allow_html=True)
+    
+    st.markdown("<hr>", unsafe_allow_html=True)
+    agent_summary = generate_agent_summary(invoice_data, po_data)
+    st.markdown(agent_summary, unsafe_allow_html=True)
+
     st.markdown('</div>', unsafe_allow_html=True)
